@@ -138,15 +138,17 @@ pub fn expand_include_str(cx: &mut ExtCtxt, sp: Span, tts: &[tokenstream::TokenT
     };
     let file = res_rel_file(cx, sp, file);
     let mut bytes = Vec::new();
-    match File::open(&file).and_then(|mut f| f.read_to_end(&mut bytes)) {
-        Ok(..) => {}
-        Err(e) => {
+
+    let file_read = File::open(&file).and_then(|mut f| f.read_to_end(&mut bytes));
+    match &file_read {
+        Err(e) if !cx.parse_sess.allow_missing_files => {
             cx.span_err(sp,
                         &format!("couldn't read {}: {}",
                                 file.display(),
                                 e));
             return DummyResult::expr(sp);
-        }
+        },
+        _ => {}
     };
     match String::from_utf8(bytes) {
         Ok(src) => {
@@ -156,7 +158,11 @@ pub fn expand_include_str(cx: &mut ExtCtxt, sp: Span, tts: &[tokenstream::TokenT
             // dependency information
             cx.source_map().new_source_file(file.into(), src);
 
-            base::MacEager::expr(cx.expr_str(sp, interned_src))
+            if file_read.is_ok() {
+                base::MacEager::expr(cx.expr_str(sp, interned_src))
+            } else {
+                DummyResult::expr(sp)
+            }
         }
         Err(_) => {
             cx.span_err(sp,
@@ -176,12 +182,12 @@ pub fn expand_include_bytes(cx: &mut ExtCtxt, sp: Span, tts: &[tokenstream::Toke
     let file = res_rel_file(cx, sp, file);
     let mut bytes = Vec::new();
     match File::open(&file).and_then(|mut f| f.read_to_end(&mut bytes)) {
-        Err(e) => {
+        Err(ref e) if !cx.parse_sess.allow_missing_files => {
             cx.span_err(sp,
                         &format!("couldn't read {}: {}", file.display(), e));
             DummyResult::expr(sp)
-        }
-        Ok(..) => {
+        },
+        _ => {
             // Add this input file to the code map to make it available as
             // dependency information, but don't enter it's contents
             cx.source_map().new_source_file(file.into(), String::new());

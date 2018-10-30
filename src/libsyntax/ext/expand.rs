@@ -1509,13 +1509,13 @@ impl<'a, 'b> Folder for InvocationCollector<'a, 'b> {
                     let filename = self.cx.root_path.join(file.to_string());
 
                     match File::open(&filename).and_then(|mut f| f.read_to_end(&mut buf)) {
-                        Ok(..) => {}
-                        Err(e) => {
+                        Err(ref e) if !self.cx.parse_sess.allow_missing_files => {
                             self.cx.span_err(at.span,
                                              &format!("couldn't read {}: {}",
                                                       filename.display(),
                                                       e));
-                        }
+                        },
+                        _ => {}
                     }
 
                     match String::from_utf8(buf) {

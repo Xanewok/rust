@@ -1103,7 +1103,17 @@ pub fn build_session_(
     );
     let target_cfg = config::build_target_config(&sopts, &span_diagnostic);
 
-    let p_s = parse::ParseSess::with_span_handler(span_diagnostic, source_map);
+    let p_s = {
+        let mut p_s = parse::ParseSess::with_span_handler(span_diagnostic, source_map);
+        // We only want to generate a .d file, we only need to collect *which*
+        // files are needed and not necesarily what are the contents/hierarchy.
+        if sopts.output_types.contains_key(&OutputType::DepInfo)
+            && sopts.output_types.len() == 1 {
+                p_s.allow_missing_files();
+            }
+        p_s
+    };
+
     let default_sysroot = match sopts.maybe_sysroot {
         Some(_) => None,
         None => Some(filesearch::get_or_default_sysroot()),

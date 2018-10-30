@@ -59,6 +59,7 @@ pub struct ParseSess {
     included_mod_stack: Lock<Vec<PathBuf>>,
     code_map: Lrc<SourceMap>,
     pub buffered_lints: Lock<Vec<BufferedEarlyLint>>,
+    pub allow_missing_files: bool,
 }
 
 impl ParseSess {
@@ -83,7 +84,12 @@ impl ParseSess {
             code_map,
             non_modrs_mods: Lock::new(vec![]),
             buffered_lints: Lock::new(vec![]),
+            allow_missing_files: false,
         }
+    }
+
+    pub fn allow_missing_files(&mut self) {
+        self.allow_missing_files = true;
     }
 
     pub fn source_map(&self) -> &SourceMap {
