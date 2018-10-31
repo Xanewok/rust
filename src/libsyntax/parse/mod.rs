@@ -235,6 +235,12 @@ fn file_to_source_file(sess: &ParseSess, path: &Path, spanopt: Option<Span>)
                    -> Lrc<SourceFile> {
     match sess.source_map().load_file(path) {
         Ok(source_file) => source_file,
+        Err(..) if sess.allow_missing_files => {
+            // Add this file to the source map to make it available as
+            // dependency information, but don't enter its contents
+            let file = FileName::Real(path.to_owned());
+            sess.source_map().new_source_file(file, String::new())
+        },
         Err(e) => {
             let msg = format!("couldn't read {}: {}", path.display(), e);
             match spanopt {
