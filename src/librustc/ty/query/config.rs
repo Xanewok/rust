@@ -776,6 +776,12 @@ impl<'tcx> QueryDescription<'tcx> for queries::output_filenames<'tcx> {
     }
 }
 
+impl<'tcx> QueryDescription<'tcx> for queries::glob_map<'tcx> {
+    fn describe(_tcx: TyCtxt<'_, '_, '_>, _: CrateNum) -> Cow<'static, str> {
+        "glob_map".into()
+    }
+}
+
 impl<'tcx> QueryDescription<'tcx> for queries::vtable_methods<'tcx> {
     fn describe(tcx: TyCtxt<'_, '_, '_>, key: ty::PolyTraitRef<'tcx> ) -> Cow<'static, str> {
         format!("finding all methods for trait {}", tcx.item_path_str(key.def_id())).into()

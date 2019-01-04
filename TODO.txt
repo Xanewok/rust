@@ -1,0 +1,3 @@
+To make glob_map a query, we would need querify name resolution?
+Which doesn't seem to be easy/trivial:
+https://github.com/rust-lang/rust/blob/fe0c10019d7ee96909cc42cc265ef999a6b5dd70/src/librustc_driver/driver.rs#L589-L593

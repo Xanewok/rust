@@ -5271,3 +5271,18 @@ impl CrateLint {
 }
 
 __build_diagnostic_array! { librustc_resolve, DIAGNOSTICS }
+
+use rustc::ty::query::Providers;
+use rustc::ty::TyCtxt;
+use rustc::hir::def_id::CrateNum;
+
+pub fn provide(p: &mut Providers) {
+    *p = Providers {
+        glob_map,
+        ..*p
+    };
+}
+
+fn glob_map<'tcx>(_tcx: TyCtxt<'_, 'tcx, 'tcx>, _: CrateNum) -> Lrc<GlobMap> {
+    unimplemented!()
+}
