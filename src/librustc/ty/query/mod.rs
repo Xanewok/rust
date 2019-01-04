@@ -552,6 +552,7 @@ define_queries! { <'tcx>
     Other {
         [] fn output_filenames: output_filenames_node(CrateNum)
             -> Arc<OutputFilenames>,
+        [] fn glob_map: glob_map_node(CrateNum) -> Lrc<hir::GlobMap>,
     },
 
     TypeChecking {
@@ -878,6 +879,10 @@ fn collect_and_partition_mono_items_node<'tcx>(_: CrateNum) -> DepConstructor<'t
 
 fn output_filenames_node<'tcx>(_: CrateNum) -> DepConstructor<'tcx> {
     DepConstructor::OutputFilenames
+}
+
+fn glob_map_node<'tcx>(_: CrateNum) -> DepConstructor<'tcx> {
+    DepConstructor::GlobMap
 }
 
 fn vtable_methods_node<'tcx>(trait_ref: ty::PolyTraitRef<'tcx>) -> DepConstructor<'tcx> {

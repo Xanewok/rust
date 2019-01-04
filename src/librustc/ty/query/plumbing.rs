@@ -1399,6 +1399,7 @@ pub fn force_from_dep_node<'a, 'gcx, 'lcx>(tcx: TyCtxt<'a, 'gcx, 'lcx>,
         }
         DepKind::IsCodegenedItem => { force!(is_codegened_item, def_id!()); }
         DepKind::OutputFilenames => { force!(output_filenames, LOCAL_CRATE); }
+        DepKind::GlobMap => { force!(glob_map, LOCAL_CRATE); }
 
         DepKind::TargetFeaturesWhitelist => { force!(target_features_whitelist, LOCAL_CRATE); }
 

@@ -1166,6 +1166,7 @@ pub fn default_provide(providers: &mut ty::query::Providers) {
     mir::provide(providers);
     reachable::provide(providers);
     resolve_lifetime::provide(providers);
+    rustc_resolve::provide(providers);
     rustc_privacy::provide(providers);
     typeck::provide(providers);
     ty::provide(providers);
