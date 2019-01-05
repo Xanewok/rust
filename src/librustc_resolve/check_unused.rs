@@ -8,49 +8,33 @@
 // Unused trait imports can't be checked until the method resolution. We save
 // candidates here, and do the actual check in librustc_typeck/check_unused.rs.
 
-use std::ops::{Deref, DerefMut};
-
 use Resolver;
 use resolve_imports::ImportDirectiveSubclass;
 
 use rustc::{lint, ty};
-use rustc::util::nodemap::NodeMap;
+use rustc::util::nodemap::{NodeMap, NodeSet};
 use syntax::ast;
 use syntax::visit::{self, Visitor};
 use syntax_pos::{Span, MultiSpan, DUMMY_SP};
 
 
 struct UnusedImportCheckVisitor<'a, 'b: 'a> {
-    resolver: &'a mut Resolver<'b>,
+    resolver: &'a Resolver<'b>,
     /// All the (so far) unused imports, grouped path list
     unused_imports: NodeMap<NodeMap<Span>>,
+    definitely_used_trait_imports: NodeSet,
     base_id: ast::NodeId,
     item_span: Span,
-}
-
-// Deref and DerefMut impls allow treating UnusedImportCheckVisitor as Resolver.
-impl<'a, 'b> Deref for UnusedImportCheckVisitor<'a, 'b> {
-    type Target = Resolver<'b>;
-
-    fn deref(&self) -> &Resolver<'b> {
-        self.resolver
-    }
-}
-
-impl<'a, 'b> DerefMut for UnusedImportCheckVisitor<'a, 'b> {
-    fn deref_mut(&mut self) -> &mut Resolver<'b> {
-        self.resolver
-    }
 }
 
 impl<'a, 'b> UnusedImportCheckVisitor<'a, 'b> {
     // We have information about whether `use` (import) directives are actually
     // used now. If an import is not used at all, we signal a lint error.
     fn check_import(&mut self, item_id: ast::NodeId, id: ast::NodeId, span: Span) {
-        let used = Resolver::namespaces().any(|ns| self.used_imports.contains(&(id, ns)));
+        let used = Resolver::namespaces().any(|ns| self.resolver.used_imports.contains(&(id, ns)));
 
         if !used {
-            if self.maybe_unused_trait_imports.contains(&id) {
+            if self.resolver.maybe_unused_trait_imports.contains(&id) {
                 // Check later.
                 return;
             }
@@ -58,7 +42,7 @@ impl<'a, 'b> UnusedImportCheckVisitor<'a, 'b> {
         } else {
             // This trait import is definitely used, in a way other than
             // method resolution.
-            self.maybe_unused_trait_imports.remove(&id);
+            self.definitely_used_trait_imports.insert(id);
             if let Some(i) = self.unused_imports.get_mut(&item_id) {
                 i.remove(&id);
             }
@@ -152,6 +136,7 @@ pub fn check_crate(resolver: &mut Resolver, krate: &ast::Crate) {
     let mut visitor = UnusedImportCheckVisitor {
         resolver,
         unused_imports: Default::default(),
+        definitely_used_trait_imports: Default::default(),
         base_id: ast::DUMMY_NODE_ID,
         item_span: DUMMY_SP,
     };
@@ -178,5 +163,11 @@ pub fn check_crate(resolver: &mut Resolver, krate: &ast::Crate) {
                               String::new()
                           });
         resolver.session.buffer_lint(lint::builtin::UNUSED_IMPORTS, *id, ms, &msg);
+    }
+
+    // This trait import is definitely used, in a way other than
+    // method resolution.
+    for id in visitor.definitely_used_trait_imports {
+        resolver.maybe_unused_trait_imports.remove(&id);
     }
 }
