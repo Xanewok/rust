@@ -114,7 +114,7 @@ impl<'a, 'b> Visitor<'a> for UnusedImportCheckVisitor<'a, 'b> {
 }
 
 pub fn check_crate(resolver: &mut Resolver, krate: &ast::Crate) {
-    for directive in resolver.potentially_unused_imports.iter() {
+    for directive in &resolver.potentially_unused_imports {
         match directive.subclass {
             _ if directive.used.get() ||
                  directive.vis.get() == ty::Visibility::Public ||
@@ -145,8 +145,8 @@ pub fn check_crate(resolver: &mut Resolver, krate: &ast::Crate) {
         }
     }
 
-    for (id, span) in resolver.unused_labels.iter() {
-        resolver.session.buffer_lint(lint::builtin::UNUSED_LABELS, *id, *span, "unused label");
+    for (&id, &span) in &resolver.unused_labels {
+        resolver.session.buffer_lint(lint::builtin::UNUSED_LABELS, id, span, "unused label");
     }
 
     let mut visitor = UnusedImportCheckVisitor {
