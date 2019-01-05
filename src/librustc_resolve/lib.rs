@@ -1914,11 +1914,15 @@ impl<'a> Resolver<'a> {
         Default::default()
     }
 
+    // Returns an iterator over any namespace.
+    pub fn namespaces() -> impl Iterator<Item = Namespace>
+    {
+        [TypeNS, ValueNS, MacroNS].iter().cloned()
+    }
+
     /// Runs the function on each namespace.
-    fn per_ns<F: FnMut(&mut Self, Namespace)>(&mut self, mut f: F) {
-        f(self, TypeNS);
-        f(self, ValueNS);
-        f(self, MacroNS);
+    fn per_ns<F: FnMut(Namespace)>(f: F) {
+        Self::namespaces().for_each(f)
     }
 
     fn macro_def(&self, mut ctxt: SyntaxContext) -> DefId {
