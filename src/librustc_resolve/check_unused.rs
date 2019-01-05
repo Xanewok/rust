@@ -32,14 +32,14 @@ struct UnusedImportCheckVisitor<'a, 'b: 'a> {
 impl<'a, 'b> Deref for UnusedImportCheckVisitor<'a, 'b> {
     type Target = Resolver<'b>;
 
-    fn deref<'c>(&'c self) -> &'c Resolver<'b> {
-        &*self.resolver
+    fn deref(&self) -> &Resolver<'b> {
+        self.resolver
     }
 }
 
 impl<'a, 'b> DerefMut for UnusedImportCheckVisitor<'a, 'b> {
-    fn deref_mut<'c>(&'c mut self) -> &'c mut Resolver<'b> {
-        &mut *self.resolver
+    fn deref_mut(&mut self) -> &mut Resolver<'b> {
+        self.resolver
     }
 }
 
