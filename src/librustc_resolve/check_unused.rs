@@ -164,7 +164,7 @@ pub fn check_crate(resolver: &mut Resolver, krate: &ast::Crate) {
         let ms = MultiSpan::from_spans(spans.clone());
         let mut span_snippets = spans.iter()
             .filter_map(|s| {
-                match visitor.session.source_map().span_to_snippet(*s) {
+                match resolver.session.source_map().span_to_snippet(*s) {
                     Ok(s) => Some(format!("`{}`", s)),
                     _ => None,
                 }
@@ -177,6 +177,6 @@ pub fn check_crate(resolver: &mut Resolver, krate: &ast::Crate) {
                           } else {
                               String::new()
                           });
-        visitor.session.buffer_lint(lint::builtin::UNUSED_IMPORTS, *id, ms, &msg);
+        resolver.session.buffer_lint(lint::builtin::UNUSED_IMPORTS, *id, ms, &msg);
     }
 }
