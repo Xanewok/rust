@@ -764,12 +764,8 @@ where
         &mut crate_loader,
         after_expand,
     );
-    match result {
-        Ok(InnerExpansionResult {
-            expanded_crate,
-            resolver,
-            hir_forest,
-        }) => Ok(ExpansionResult {
+    result.map(|InnerExpansionResult { expanded_crate, resolver, hir_forest }| {
+        ExpansionResult {
             expanded_crate,
             defs: resolver.definitions,
             hir_forest,
@@ -791,9 +787,8 @@ where
                     None
                 },
             },
-        }),
-        Err(x) => Err(x),
-    }
+        }
+    })
 }
 
 /// Same as phase_2_configure_and_expand, but doesn't let you keep the resolver
