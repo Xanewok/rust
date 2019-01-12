@@ -140,10 +140,10 @@ pub trait Resolver {
     ) -> hir::Path;
 
     /// Obtain the resolution for a node-id.
-    fn get_resolution(&mut self, id: NodeId) -> Option<PathResolution>;
+    fn get_resolution(&self, id: NodeId) -> Option<PathResolution>;
 
     /// Obtain the possible resolutions for the given `use` statement.
-    fn get_import(&mut self, id: NodeId) -> PerNS<Option<PathResolution>>;
+    fn get_import(&self, id: NodeId) -> PerNS<Option<PathResolution>>;
 
     /// We must keep the set of definitions up to date as we add nodes that weren't in the AST.
     /// This should only return `None` during testing.

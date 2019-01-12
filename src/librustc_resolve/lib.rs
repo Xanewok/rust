@@ -1678,11 +1678,11 @@ impl<'a> hir::lowering::Resolver for Resolver<'a> {
         self.resolve_hir_path(&path, is_value)
     }
 
-    fn get_resolution(&mut self, id: NodeId) -> Option<PathResolution> {
+    fn get_resolution(&self, id: NodeId) -> Option<PathResolution> {
         self.def_map.get(&id).cloned()
     }
 
-    fn get_import(&mut self, id: NodeId) -> PerNS<Option<PathResolution>> {
+    fn get_import(&self, id: NodeId) -> PerNS<Option<PathResolution>> {
         self.import_map.get(&id).cloned().unwrap_or_default()
     }
 
