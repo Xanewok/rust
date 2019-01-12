@@ -165,10 +165,6 @@ pub struct Map<'hir> {
     /// The backing storage for all the AST nodes.
     pub forest: &'hir Forest,
 
-    /// Same as the dep_graph in forest, just available with one fewer
-    /// deref. This is a gratuitous micro-optimization.
-    pub dep_graph: DepGraph,
-
     /// The SVH of the local crate.
     pub crate_hash: Svh,
 
@@ -199,10 +195,15 @@ impl<'hir> Map<'hir> {
     /// NodeId, no actual content was returned, so no read is needed.
     pub fn read(&self, id: NodeId) {
         if let Some(entry) = self.map[id.as_usize()] {
-            self.dep_graph.read_index(entry.dep_node);
+            self.dep_graph().read_index(entry.dep_node);
         } else {
             bug!("called `HirMap::read()` with invalid `NodeId`: {:?}", id)
         }
+    }
+
+    #[inline]
+    pub fn dep_graph(&self) -> &'hir DepGraph {
+        &self.forest.dep_graph
     }
 
     #[inline]
@@ -424,10 +425,10 @@ impl<'hir> Map<'hir> {
     /// if the node is a body owner, otherwise returns `None`.
     pub fn maybe_body_owned_by(&self, id: NodeId) -> Option<BodyId> {
         if let Some(entry) = self.find_entry(id) {
-            if self.dep_graph.is_fully_enabled() {
+            if self.dep_graph().is_fully_enabled() {
                 let hir_id_owner = self.node_to_hir_id(id).owner;
                 let def_path_hash = self.definitions.def_path_hash(hir_id_owner);
-                self.dep_graph.read(def_path_hash.to_dep_node(DepKind::HirBody));
+                self.dep_graph().read(def_path_hash.to_dep_node(DepKind::HirBody));
             }
 
             entry.associated_body()
@@ -477,7 +478,7 @@ impl<'hir> Map<'hir> {
     }
 
     pub fn trait_impls(&self, trait_did: DefId) -> &'hir [NodeId] {
-        self.dep_graph.read(DepNode::new_no_params(DepKind::AllLocalTraitImpls));
+        self.dep_graph().read(DepNode::new_no_params(DepKind::AllLocalTraitImpls));
 
         // N.B., intentionally bypass `self.forest.krate()` so that we
         // do not trigger a read of the whole krate here
@@ -485,7 +486,7 @@ impl<'hir> Map<'hir> {
     }
 
     pub fn trait_auto_impl(&self, trait_did: DefId) -> Option<NodeId> {
-        self.dep_graph.read(DepNode::new_no_params(DepKind::AllLocalTraitImpls));
+        self.dep_graph().read(DepNode::new_no_params(DepKind::AllLocalTraitImpls));
 
         // N.B., intentionally bypass `self.forest.krate()` so that we
         // do not trigger a read of the whole krate here
@@ -502,7 +503,7 @@ impl<'hir> Map<'hir> {
     pub fn krate_attrs(&self) -> &'hir [ast::Attribute] {
         let def_path_hash = self.definitions.def_path_hash(CRATE_DEF_INDEX);
 
-        self.dep_graph.read(def_path_hash.to_dep_node(DepKind::Hir));
+        self.dep_graph().read(def_path_hash.to_dep_node(DepKind::Hir));
         &self.forest.krate.attrs
     }
 
@@ -571,10 +572,10 @@ impl<'hir> Map<'hir> {
     /// from a node to the root of the ast (unless you get the same id back here
     /// that can happen if the id is not in the map itself or is just weird).
     pub fn get_parent_node(&self, id: NodeId) -> NodeId {
-        if self.dep_graph.is_fully_enabled() {
+        if self.dep_graph().is_fully_enabled() {
             let hir_id_owner = self.node_to_hir_id(id).owner;
             let def_path_hash = self.definitions.def_path_hash(hir_id_owner);
-            self.dep_graph.read(def_path_hash.to_dep_node(DepKind::HirBody));
+            self.dep_graph().read(def_path_hash.to_dep_node(DepKind::HirBody));
         }
 
         self.find_entry(id).and_then(|x| x.parent_node()).unwrap_or(id)
@@ -1057,7 +1058,6 @@ pub fn map_crate<'hir>(sess: &::session::Session,
 
     let map = Map {
         forest,
-        dep_graph: forest.dep_graph.clone(),
         crate_hash,
         map,
         hir_to_node_id,

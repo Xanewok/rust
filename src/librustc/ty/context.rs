@@ -1153,7 +1153,7 @@ impl<'a, 'gcx, 'tcx> TyCtxt<'a, 'gcx, 'tcx> {
         });
         let interners = CtxtInterners::new(&arenas.interner);
         let common_types = CommonTypes::new(&interners);
-        let dep_graph = hir.dep_graph.clone();
+        let dep_graph = hir.dep_graph().clone();
         let max_cnum = cstore.crates_untracked().iter().map(|c| c.as_usize()).max().unwrap_or(0);
         let mut providers = IndexVec::from_elem_n(extern_providers, max_cnum + 1);
         providers[LOCAL_CRATE] = local_providers;

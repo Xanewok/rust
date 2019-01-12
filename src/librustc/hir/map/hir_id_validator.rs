@@ -10,7 +10,7 @@ pub fn check_crate<'hir>(hir_map: &hir::map::Map<'hir>) {
         errors: vec![],
     };
 
-    hir_map.dep_graph.assert_ignored();
+    hir_map.forest.dep_graph.assert_ignored();
 
     hir_map.krate().visit_all_item_likes(&mut outer_visitor);
     if !outer_visitor.errors.is_empty() {

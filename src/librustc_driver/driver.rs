@@ -241,7 +241,7 @@ pub fn compile_input(
         });
 
         {
-            hir_map.dep_graph.assert_ignored();
+            hir_map.dep_graph().assert_ignored();
             controller_entry_point!(
                 after_hir_lowering,
                 sess,
