@@ -1,7 +1,5 @@
 use std::io::Write;
 
-use rustc_serialize::json::as_json;
-
 use rls_data::config::Config;
 use rls_data::{self, Analysis, CompilationOptions, CratePreludeData, Def, DefKind, Impl, Import,
                MacroRef, Ref, RefKind, Relation};
@@ -31,8 +29,16 @@ pub struct WriteOutput<'b, W: Write> {
 
 impl<'b, W: Write> DumpOutput for WriteOutput<'b, W> {
     fn dump(&mut self, result: &Analysis) {
-        if write!(self.output, "{}", as_json(&result)).is_err() {
-            error!("Error writing output");
+        let json = match serde_json::to_string(result) {
+            Ok(json) => json,
+            Err(e) => {
+                error!("Can't serialize save-analysis: {}", e);
+                return;
+            }
+        };
+
+        if let Err(e) = write!(self.output, "{}", json) {
+            error!("Error writing save-analysis: {:?}", e);
         }
     }
 }
