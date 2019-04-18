@@ -29,16 +29,8 @@ pub struct WriteOutput<'b, W: Write> {
 
 impl<'b, W: Write> DumpOutput for WriteOutput<'b, W> {
     fn dump(&mut self, result: &Analysis) {
-        let json = match serde_json::to_string(result) {
-            Ok(json) => json,
-            Err(e) => {
-                error!("Can't serialize save-analysis: {}", e);
-                return;
-            }
-        };
-
-        if let Err(e) = write!(self.output, "{}", json) {
-            error!("Error writing save-analysis: {:?}", e);
+        if let Err(e) = serde_json::to_writer(self.output.by_ref(), result) {
+            error!("Can't serialize save-analysis: {:?}", e);
         }
     }
 }
