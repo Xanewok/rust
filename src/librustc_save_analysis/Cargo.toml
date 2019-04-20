@@ -11,8 +11,8 @@ crate-type = ["dylib"]
 
 [dependencies]
 log = "0.4"
-rls-data = { version = "0.18.2", features = ["serialize-serde"] }
-rls-span = "0.4"
+rls-data = "0.19"
+rls-span = "0.5"
 rustc = { path = "../librustc" }
 rustc_data_structures = { path = "../librustc_data_structures" }
 rustc_codegen_utils = { path = "../librustc_codegen_utils" }
