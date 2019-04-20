@@ -962,6 +962,8 @@ impl<'a> Builder<'a> {
                     self.config.rust_debuginfo_lines.to_string(),
                 );
             }
+
+            cargo.env("RUSTC_METADATA_SUFFIX", "tools");
         } else {
             cargo.env("RUSTC_DEBUGINFO", self.config.rust_debuginfo.to_string());
             cargo.env(
