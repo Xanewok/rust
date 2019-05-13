@@ -18,6 +18,7 @@
 #![feature(step_trait)]
 #![feature(try_trait)]
 #![feature(unicode_internals)]
+#![feature(rustc_private)]
 
 #![recursion_limit="256"]
 
