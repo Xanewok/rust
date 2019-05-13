@@ -4,7 +4,8 @@ use crate::ast::{self, Ident, Lit, LitKind};
 use crate::parse::parser::Parser;
 use crate::parse::PResult;
 use crate::parse::token::{self, Token};
-use crate::parse::unescape::{unescape_str, unescape_char, unescape_byte_str, unescape_byte};
+use crate::parse::unescape::{unescape_str, unescape_char, unescape_byte_str,
+    unescape_raw_str, unescape_byte};
 use crate::print::pprust;
 use crate::symbol::{keywords, Symbol};
 use crate::tokenstream::{TokenStream, TokenTree};
@@ -92,7 +93,18 @@ impl LitKind {
                 // Ditto.
                 let s = &sym.as_str();
                 if s.contains('\r') {
-                    sym = Symbol::intern(&raw_str_lit(s));
+                    let mut has_error = false;
+                    let mut buf = String::with_capacity(s.len());
+                    unescape_raw_str(s, &mut |_, unescaped_char| {
+                        match unescaped_char {
+                            Ok(c) => buf.push(c),
+                            Err(_) => has_error = true,
+                        }
+                    });
+                    if has_error {
+                        return Some(LitKind::Err(sym));
+                    }
+                    sym = Symbol::intern(&buf);
                 }
                 LitKind::Str(sym, ast::StrStyle::Raw(n))
             }
@@ -294,29 +306,6 @@ crate fn expect_no_suffix(sp: Span, diag: &Handler, kind: &str, suffix: Option<a
             err.emit();
         }
     }
-}
-
-/// Parses a string representing a raw string literal into its final form. The
-/// only operation this does is convert embedded CRLF into a single LF.
-fn raw_str_lit(lit: &str) -> String {
-    debug!("raw_str_lit: given {}", lit.escape_default());
-    let mut res = String::with_capacity(lit.len());
-
-    let mut chars = lit.chars().peekable();
-    while let Some(c) = chars.next() {
-        if c == '\r' {
-            if *chars.peek().unwrap() != '\n' {
-                panic!("lexer accepted bare CR");
-            }
-            chars.next();
-            res.push('\n');
-        } else {
-            res.push(c);
-        }
-    }
-
-    res.shrink_to_fit();
-    res
 }
 
 // check if `s` looks like i32 or u1234 etc.
