@@ -1265,25 +1265,24 @@ impl<'a> StringReader<'a> {
         if self.is_eof() {
             self.fail_unterminated_raw_string(start_bpos, hash_count);
         } else if !self.ch_is('"') {
-            let last_bpos = self.pos;
-            let curr_char = self.ch.unwrap();
+            let pos = self.pos;
+            let ch = self.ch.unwrap();
             self.fatal_span_char(start_bpos,
-                                    last_bpos,
+                                    pos,
                                     "found invalid character; only `#` is allowed \
                                     in raw string delimitation",
-                                    curr_char).raise();
+                                    ch).raise();
         }
         self.bump();
         let content_start_bpos = self.pos;
         let mut content_end_bpos;
         let mut valid = true;
         'outer: loop {
-            if self.is_eof() {
-                self.fail_unterminated_raw_string(start_bpos, hash_count);
-            }
-            let c = self.ch.unwrap();
-            match c {
-                '"' => {
+            match self.ch {
+                None => {
+                    self.fail_unterminated_raw_string(start_bpos, hash_count);
+                }
+                Some('"') => {
                     content_end_bpos = self.pos;
                     for _ in 0..hash_count {
                         self.bump();
@@ -1293,8 +1292,8 @@ impl<'a> StringReader<'a> {
                     }
                     break;
                 }
-                '\r' => {
-                    if !self.nextch_is('\n') {
+                Some(c) => {
+                    if c == '\r' && !self.nextch_is('\n') {
                         let last_bpos = self.pos;
                         self.err_span_(start_bpos,
                                         last_bpos,
@@ -1303,7 +1302,6 @@ impl<'a> StringReader<'a> {
                         valid = false;
                     }
                 }
-                _ => (),
             }
             self.bump();
         }
