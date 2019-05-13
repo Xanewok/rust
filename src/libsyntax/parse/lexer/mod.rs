@@ -1161,79 +1161,7 @@ impl<'a> StringReader<'a> {
                 Ok(token::Literal(token::Str_(id), suffix))
             }
             'r' => {
-                let start_bpos = self.pos;
-                self.bump();
-                let mut hash_count: u16 = 0;
-                while self.ch_is('#') {
-                    if hash_count == 65535 {
-                        let bpos = self.next_pos;
-                        self.fatal_span_(start_bpos,
-                                         bpos,
-                                         "too many `#` symbols: raw strings may be \
-                                         delimited by up to 65535 `#` symbols").raise();
-                    }
-                    self.bump();
-                    hash_count += 1;
-                }
-
-                if self.is_eof() {
-                    self.fail_unterminated_raw_string(start_bpos, hash_count);
-                } else if !self.ch_is('"') {
-                    let last_bpos = self.pos;
-                    let curr_char = self.ch.unwrap();
-                    self.fatal_span_char(start_bpos,
-                                         last_bpos,
-                                         "found invalid character; only `#` is allowed \
-                                         in raw string delimitation",
-                                         curr_char).raise();
-                }
-                self.bump();
-                let content_start_bpos = self.pos;
-                let mut content_end_bpos;
-                let mut valid = true;
-                'outer: loop {
-                    if self.is_eof() {
-                        self.fail_unterminated_raw_string(start_bpos, hash_count);
-                    }
-                    // if self.ch_is('"') {
-                    // content_end_bpos = self.pos;
-                    // for _ in 0..hash_count {
-                    // self.bump();
-                    // if !self.ch_is('#') {
-                    // continue 'outer;
-                    let c = self.ch.unwrap();
-                    match c {
-                        '"' => {
-                            content_end_bpos = self.pos;
-                            for _ in 0..hash_count {
-                                self.bump();
-                                if !self.ch_is('#') {
-                                    continue 'outer;
-                                }
-                            }
-                            break;
-                        }
-                        '\r' => {
-                            if !self.nextch_is('\n') {
-                                let last_bpos = self.pos;
-                                self.err_span_(start_bpos,
-                                               last_bpos,
-                                               "bare CR not allowed in raw string, use \\r \
-                                                instead");
-                                valid = false;
-                            }
-                        }
-                        _ => (),
-                    }
-                    self.bump();
-                }
-
-                self.bump();
-                let id = if valid {
-                    self.name_from_to(content_start_bpos, content_end_bpos)
-                } else {
-                    Symbol::intern("??")
-                };
+                let (id, hash_count) = self.scan_raw_string();
                 let suffix = self.scan_optional_raw_name();
 
                 Ok(token::Literal(token::StrRaw(id, hash_count), suffix))
@@ -1388,6 +1316,85 @@ impl<'a> StringReader<'a> {
         let id = self.name_from(start);
         self.bump();
         id
+    }
+
+    fn scan_raw_string(&mut self) -> (ast::Name, u16) {
+        let start_bpos = self.pos;
+        self.bump();
+        let mut hash_count: u16 = 0;
+        while self.ch_is('#') {
+            if hash_count == 65535 {
+                let bpos = self.next_pos;
+                self.fatal_span_(start_bpos,
+                                    bpos,
+                                    "too many `#` symbols: raw strings may be \
+                                    delimited by up to 65535 `#` symbols").raise();
+            }
+            self.bump();
+            hash_count += 1;
+        }
+
+        if self.is_eof() {
+            self.fail_unterminated_raw_string(start_bpos, hash_count);
+        } else if !self.ch_is('"') {
+            let last_bpos = self.pos;
+            let curr_char = self.ch.unwrap();
+            self.fatal_span_char(start_bpos,
+                                    last_bpos,
+                                    "found invalid character; only `#` is allowed \
+                                    in raw string delimitation",
+                                    curr_char).raise();
+        }
+        self.bump();
+        let content_start_bpos = self.pos;
+        let mut content_end_bpos;
+        let mut valid = true;
+        'outer: loop {
+            if self.is_eof() {
+                self.fail_unterminated_raw_string(start_bpos, hash_count);
+            }
+            // if self.ch_is('"') {
+            // content_end_bpos = self.pos;
+            // for _ in 0..hash_count {
+            // self.bump();
+            // if !self.ch_is('#') {
+            // continue 'outer;
+            let c = self.ch.unwrap();
+            match c {
+                '"' => {
+                    content_end_bpos = self.pos;
+                    for _ in 0..hash_count {
+                        self.bump();
+                        if !self.ch_is('#') {
+                            continue 'outer;
+                        }
+                    }
+                    break;
+                }
+                '\r' => {
+                    if !self.nextch_is('\n') {
+                        let last_bpos = self.pos;
+                        self.err_span_(start_bpos,
+                                        last_bpos,
+                                        "bare CR not allowed in raw string, use \\r \
+                                        instead");
+                        valid = false;
+                    }
+                }
+                _ => (),
+            }
+            self.bump();
+        }
+
+        self.bump();
+
+        let id = if valid {
+            self.name_from_to(content_start_bpos, content_end_bpos)
+        } else {
+            Symbol::intern("??")
+        };
+
+        (id, hash_count)
     }
 
     fn scan_raw_byte_string(&mut self) -> token::Lit {
