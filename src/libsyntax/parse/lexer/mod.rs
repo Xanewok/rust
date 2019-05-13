@@ -1325,9 +1325,9 @@ impl<'a> StringReader<'a> {
             if hash_count == 65535 {
                 let bpos = self.next_pos;
                 self.fatal_span_(start_bpos,
-                                    bpos,
-                                    "too many `#` symbols: raw strings may be \
-                                    delimited by up to 65535 `#` symbols").raise();
+                                 bpos,
+                                 "too many `#` symbols: raw strings may be \
+                                 delimited by up to 65535 `#` symbols").raise();
             }
             self.bump();
             hash_count += 1;
@@ -1339,10 +1339,10 @@ impl<'a> StringReader<'a> {
             let pos = self.pos;
             let ch = self.ch.unwrap();
             self.fatal_span_char(start_bpos,
-                                    pos,
-                                    "found invalid character; only `#` is allowed \
-                                    in raw string delimitation",
-                                    ch).raise();
+                                        pos,
+                                        "found invalid character; only `#` is allowed in raw \
+                                         string delimitation",
+                                        ch).raise();
         }
         self.bump();
         let content_start_bpos = self.pos;
