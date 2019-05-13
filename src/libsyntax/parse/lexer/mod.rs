@@ -1145,7 +1145,10 @@ impl<'a> StringReader<'a> {
                         self.validate_byte_str_escape(start_with_quote);
                         token::ByteStr(id)
                     },
-                    Some('r') => self.scan_raw_byte_string(),
+                    Some('r') => {
+                        let (id, hash_count) = self.scan_raw_byte_string();
+                        token::ByteStrRaw(id, hash_count)
+                    }
                     _ => unreachable!(),  // Should have been a token::Ident above.
                 };
                 let suffix = self.scan_optional_raw_name();
@@ -1397,7 +1400,7 @@ impl<'a> StringReader<'a> {
         (id, hash_count)
     }
 
-    fn scan_raw_byte_string(&mut self) -> token::Lit {
+    fn scan_raw_byte_string(&mut self) -> (ast::Name, u16) {
         let start_bpos = self.pos;
         self.bump();
         let mut hash_count = 0;
@@ -1454,7 +1457,7 @@ impl<'a> StringReader<'a> {
 
         self.bump();
 
-        token::ByteStrRaw(self.name_from_to(content_start_bpos, content_end_bpos), hash_count)
+        (self.name_from_to(content_start_bpos, content_end_bpos), hash_count)
     }
 
     fn validate_char_escape(&self, start_with_quote: BytePos) {
