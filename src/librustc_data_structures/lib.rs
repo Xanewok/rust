@@ -23,7 +23,7 @@
 #![feature(core_intrinsics)]
 #![feature(integer_atomics)]
 
-#![cfg_attr(unix, feature(libc))]
+#![cfg_attr(unix, feature(libc, rustc_private))]
 #![cfg_attr(test, feature(test))]
 
 #![deny(rust_2018_idioms)]
