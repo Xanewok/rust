@@ -1356,12 +1356,6 @@ impl<'a> StringReader<'a> {
             if self.is_eof() {
                 self.fail_unterminated_raw_string(start_bpos, hash_count);
             }
-            // if self.ch_is('"') {
-            // content_end_bpos = self.pos;
-            // for _ in 0..hash_count {
-            // self.bump();
-            // if !self.ch_is('#') {
-            // continue 'outer;
             let c = self.ch.unwrap();
             match c {
                 '"' => {
